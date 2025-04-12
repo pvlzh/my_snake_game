@@ -1,4 +1,4 @@
-use super::{Direction, Position, Screen, GameSpeed, Snake};
+use super::{screen::Rotation, Direction, GameSpeed, Position, Screen, Snake};
 use rand::Rng;
 
 /// Состояние игры.
@@ -8,15 +8,15 @@ pub struct GameState {
     score: u32,
     is_game_over: bool,
     game_speed: GameSpeed,
-    screen_size: Screen,
+    screen: Screen,
 }
 
 impl GameState {
     /// Создать состояние.
-    pub fn new(screen_size: Screen, game_speed: GameSpeed) -> Self {
+    pub fn new(screen: Screen, game_speed: GameSpeed) -> Self {
         let center = Position {
-            x: screen_size.size_x() / 2,
-            y: screen_size.size_y() / 2,
+            x: screen.get_size(Rotation::X) / 2,
+            y: screen.get_size(Rotation::Y) / 2,
         };
 
         let mut state = GameState {
@@ -25,7 +25,7 @@ impl GameState {
             score: 0,
             is_game_over: false,
             game_speed,
-            screen_size,
+            screen,
         };
 
         state.generate_food();
@@ -36,8 +36,8 @@ impl GameState {
     pub fn generate_food(&mut self) {
         let mut rng = rand::thread_rng();
         self.food = Some(Position {
-            x: rng.gen_range(1..self.screen_size_x() - 1),
-            y: rng.gen_range(1..self.screen_size_y() - 1),
+            x: rng.gen_range(1..self.screen_size(Rotation::X) - 1),
+            y: rng.gen_range(1..self.screen_size(Rotation::Y) - 1),
         })
     }
 
@@ -70,9 +70,9 @@ impl GameState {
     pub fn snake_head_in_border(&self) -> bool {
         let snake_head = self.snake.head_position();
         return snake_head.x == 0
-            || snake_head.x >= self.screen_size_x() - 1
+            || snake_head.x >= self.screen_size(Rotation::X) - 1
             || snake_head.y == 0
-            || snake_head.y >= self.screen_size_y() - 1;
+            || snake_head.y >= self.screen_size(Rotation::Y) - 1;
     }
 
     /// Проверить расположение головы змеи по отношению к телу.
@@ -86,14 +86,9 @@ impl GameState {
             .any(|p| *p == snake_head);
     }
 
-    /// Получить размер окна по горизонтали.
-    pub fn screen_size_x(&self) -> u16 {
-        self.screen_size.size_x()
-    }
-
-    /// Получить размер окна по вертикали.
-    pub fn screen_size_y(&self) -> u16 {
-        self.screen_size.size_y()
+    /// Получить размер окна.
+    pub fn screen_size(&self, rotation: Rotation) -> u16 {
+        self.screen.get_size(rotation)
     }
 
     /// Получить скорость игры

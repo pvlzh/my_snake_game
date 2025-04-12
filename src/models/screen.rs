@@ -4,20 +4,24 @@ pub struct Screen {
     y: u16
 }
 
+/// Направление.
+pub enum Rotation {
+    X,
+    Y
+}
+
 impl Screen {
     /// Создать новый экран.
     pub fn new(x: u16, y: u16) -> Self {
         Screen { x, y }
     }
 
-    /// Получить ширину экрана.
-    pub fn size_x(&self) -> u16 {
-        self.x
-    }
-    
-    /// Получить высоту экрана. 
-    pub fn size_y(&self) -> u16 {
-        self.y
+    /// Получить размер экрана.
+    pub fn get_size(&self, rotation: Rotation) -> u16 {
+        match rotation {
+            Rotation::X => self.x,
+            Rotation::Y => self.y,
+        }
     }
 }
 

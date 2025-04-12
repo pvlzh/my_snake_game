@@ -1,4 +1,5 @@
 use crossterm::event::{Event, KeyCode};
+use core::time;
 use std::{sync::{mpsc::Sender, Arc, Mutex}, thread};
 
 use crate::models::GameState;
@@ -14,12 +15,17 @@ pub fn spawn_input_thread(key_event_sender: Sender<KeyCode>, state: Arc<Mutex<Ga
                         break;
                     }
                     let _ = key_event_sender.send(key_event.code);
+                    thread::sleep(time::Duration::from_secs(1/5));
                 }
-                Err(e) => {
-                    eprintln!("Error reading event: {}", e);
+                Err(_) => {
                     break;
                 },
-                _ => {}
+                _ => {
+                    let state = state.lock().unwrap();
+                    if state.is_game_over() {
+                        break;
+                    }
+                }
             }
         }
     })

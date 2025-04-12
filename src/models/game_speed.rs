@@ -7,3 +7,9 @@ pub enum GameSpeed {
     Fast = 3,
     VeryFast = 4
 }
+
+impl std::fmt::Display for GameSpeed {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
