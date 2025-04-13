@@ -26,11 +26,11 @@ pub fn spawn_game_thread(
                         state.game_over();
                         break;
                     }
-                    
+
                     if let Ok(new_direction) = Direction::try_from(key) {
                         state.snake.change_direction(new_direction);
                     }
-                
+
                     handle_game(state);
                 },
                 Err(mpsc::RecvTimeoutError::Timeout) => {
@@ -65,7 +65,7 @@ fn handle_game(mut state: std::sync::MutexGuard<'_, GameState>) {
 
     state.snake.move_forward(is_eating);
 
-    if state.snake_head_in_border() || state.snake_head_in_body() {
+    if state.is_snake_head_in_border() || state.is_snake_head_in_body() {
         state.game_over();
     }
 }

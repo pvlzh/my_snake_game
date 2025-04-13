@@ -35,7 +35,7 @@ impl GameState {
     /// Разместить на поле еду.
     pub fn generate_food(&mut self) {
         let mut rng = rand::thread_rng();
-        self.food = Some(Position {
+        self.food = Some(Position { // todo posible generation into snake body
             x: rng.gen_range(1..self.screen_size(Rotation::X) - 1),
             y: rng.gen_range(1..self.screen_size(Rotation::Y) - 1),
         })
@@ -67,7 +67,7 @@ impl GameState {
     }
 
     /// Проверить расположение головы змеи по отношению к границам поля.
-    pub fn snake_head_in_border(&self) -> bool {
+    pub fn is_snake_head_in_border(&self) -> bool {
         let snake_head = self.snake.head_position();
         return snake_head.x == 0
             || snake_head.x >= self.screen_size(Rotation::X) - 1
@@ -76,7 +76,7 @@ impl GameState {
     }
 
     /// Проверить расположение головы змеи по отношению к телу.
-    pub fn snake_head_in_body(&self) -> bool {
+    pub fn is_snake_head_in_body(&self) -> bool {
         let snake_head = self.snake.head_position();
         let snake_len = self.snake.body_len();
         return self
@@ -94,5 +94,15 @@ impl GameState {
     /// Получить скорость игры
     pub fn game_speed(&self) -> GameSpeed {
         self.game_speed
+    }
+
+    /// Повысить скорость игры.
+    pub fn up_game_speed(&mut self) {
+        self.game_speed.upgrade();
+    }
+
+    /// Понизить скорость игры.
+    pub fn down_game_speed(&mut self) {
+        self.game_speed.downgrade();
     }
 }
