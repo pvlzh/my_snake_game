@@ -1,8 +1,8 @@
-use systems::game_engine;
+use systems::runtime;
 
 mod models;
 mod systems;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    game_engine::run()
+    runtime::run()
 }

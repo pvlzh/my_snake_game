@@ -8,46 +8,51 @@ pub fn spawn_game_thread(
     state: Arc<Mutex<GameState>>,) -> thread::JoinHandle<()> {
 
     thread::spawn(move || {
-        let mut last_event = time::Instant::now();
         let logic_duration: time::Duration = {
             let state = state.lock().unwrap();
             state.game_speed().into()
         };
 
         loop {
-            let elapsed = last_event.elapsed();
-            let remaining = logic_duration
-                .checked_sub(elapsed)
-                .unwrap_or(time::Duration::ZERO);
-
-            match key_event_receiver.recv_timeout(remaining) {
+            match key_event_receiver.recv_timeout(logic_duration) {
                 Ok(key) => {
-                    last_event = time::Instant::now();
                     let mut state = state.lock().unwrap();
+
+                    if state.is_game_over() {
+                        break;
+                    }
+
+                    if key == KeyCode::Esc {
+                        state.game_over();
+                        break;
+                    }
+                    
                     if let Ok(new_direction) = Direction::try_from(key) {
                         state.snake.change_direction(new_direction);
                     }
+                
+                    handle_game(state);
+                },
+                Err(mpsc::RecvTimeoutError::Timeout) => {
+                    let state = state.lock().unwrap();
+                    if state.is_game_over() {
+                        break;
+                    }
                     handle_game(state);
                 }
-                Err(mpsc::RecvTimeoutError::Timeout) => {
-                    last_event = time::Instant::now();
-                    handle_game(state.lock().unwrap());
-                }
                 _ => {
-                    panic!("Key reciver connection lost");
+                    break;
                 }
             }
         }
     })
 }
 
-/// Поведение игры.
+/// Логика игры.
 fn handle_game(mut state: std::sync::MutexGuard<'_, GameState>) {
-    let snake_head = state.snake.head_position();
-
     let mut is_eating = false;
     if let Some(food_position) = state.food_position() {
-        is_eating = snake_head == food_position;
+        is_eating = state.snake.head_position() == food_position;
     }
     else {
         state.generate_food();

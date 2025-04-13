@@ -1,4 +1,4 @@
-pub mod game_engine;
+pub mod runtime;
 
 mod input;
 mod render;

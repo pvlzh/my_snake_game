@@ -31,6 +31,9 @@ impl Snake {
 
     /// Изменить направление змейки.
     pub fn change_direction(&mut self, new_direction: Direction) {
+        if self.direction == new_direction {
+            return;
+        }
         match (self.direction, new_direction) {
             (Direction::Up, Direction::Down) |
             (Direction::Down, Direction::Up) |
