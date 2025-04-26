@@ -6,6 +6,7 @@ pub struct GameState {
     pub snake: Snake,
     food: Option<Position>,
     score: u32,
+    score_increment_counter: u32,
     is_game_over: bool,
     game_speed: GameSpeed,
     screen: Screen,
@@ -23,6 +24,7 @@ impl GameState {
             snake: Snake::new(center, Direction::Right),
             food: None,
             score: 0,
+            score_increment_counter: 0,
             is_game_over: false,
             game_speed,
             screen,
@@ -49,11 +51,20 @@ impl GameState {
     /// Увеличить игровой счет.
     pub fn increment_score(&mut self, count: u32) {
         self.score += count;
+        self.score_increment_counter += 1;
+    }
+
+    pub fn reset_score_increment_counter(&mut self) {
+        self.score_increment_counter = 0;
     }
 
     /// Получить игровой счет.
     pub fn game_score(&self) -> u32 {
         self.score
+    }
+
+    pub fn score_increment_counter(&self) -> u32 {
+        self.score_increment_counter
     }
 
     /// Закончить игру.

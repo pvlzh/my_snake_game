@@ -8,48 +8,43 @@ pub fn spawn_game_thread(
     state: Arc<Mutex<GameState>>,) -> thread::JoinHandle<()> {
 
     thread::spawn(move || {
-        let logic_duration: time::Duration = {
+        let mut game_speed = {
             let state = state.lock().unwrap();
-            state.game_speed().into()
+            state.game_speed()
         };
 
         loop {
-            match key_event_receiver.recv_timeout(logic_duration) {
+            let event = key_event_receiver.recv_timeout(game_speed.into());
+
+            let mut state = state.lock().unwrap();
+            if state.is_game_over() {
+                break;
+            }
+
+            match event {
+                Ok(KeyCode::Esc) => {
+                    state.game_over();
+                    continue;
+                }
                 Ok(key) => {
-                    let mut state = state.lock().unwrap();
-
-                    if state.is_game_over() {
-                        break;
-                    }
-
-                    if key == KeyCode::Esc {
-                        state.game_over();
-                        break;
-                    }
-
                     if let Ok(new_direction) = Direction::try_from(key) {
                         state.snake.change_direction(new_direction);
                     }
+                }
+                _ => {}
+            }
 
-                    handle_game(state);
-                },
-                Err(mpsc::RecvTimeoutError::Timeout) => {
-                    let state = state.lock().unwrap();
-                    if state.is_game_over() {
-                        break;
-                    }
-                    handle_game(state);
-                }
-                _ => {
-                    break;
-                }
+            handle_game(&mut state);
+
+            if game_speed != state.game_speed() {
+                game_speed = state.game_speed();
             }
         }
     })
 }
 
 /// Логика игры.
-fn handle_game(mut state: std::sync::MutexGuard<'_, GameState>) {
+fn handle_game(state:&mut GameState) {
     let mut is_eating = false;
     if let Some(food_position) = state.food_position() {
         is_eating = state.snake.head_position() == food_position;
@@ -60,6 +55,10 @@ fn handle_game(mut state: std::sync::MutexGuard<'_, GameState>) {
 
     if is_eating {
         state.increment_score(10);
+        if state.score_increment_counter() >= 5 {
+            state.up_game_speed();
+            state.reset_score_increment_counter();
+        }
         state.generate_food();
     }
 
@@ -91,11 +90,11 @@ impl TryFrom<KeyCode> for Direction {
 impl Into<time::Duration> for GameSpeed {
     fn into(self) -> time::Duration {
         match self {
-            GameSpeed::VerySlow => time::Duration::from_millis(1000),
-            GameSpeed::Slow => time::Duration::from_millis(750),
-            GameSpeed::Normal => time::Duration::from_millis(500),
-            GameSpeed::Fast => time::Duration::from_millis(350),
-            GameSpeed::VeryFast => time::Duration::from_millis(100),
+            GameSpeed::VerySlow => time::Duration::from_millis(550),
+            GameSpeed::Slow => time::Duration::from_millis(400),
+            GameSpeed::Normal => time::Duration::from_millis(250),
+            GameSpeed::Fast => time::Duration::from_millis(100),
+            GameSpeed::VeryFast => time::Duration::from_millis(50),
         }
     }
 }
