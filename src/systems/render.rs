@@ -1,20 +1,17 @@
 use core::time;
 use std::{io::{Stdout, Write}, sync::{Arc, Mutex}, thread};
 use crossterm::{self as ct, terminal::EnterAlternateScreen, QueueableCommand};
-use crate::models::{GameState, Rotation};
+use crate::models::{CancellationToken, GameState, Rotation};
 
 /// Создать поток рендеринга.
-pub fn spawn_render_thread(stdout: Arc<Mutex<Stdout>>, state: Arc<Mutex<GameState>>) -> thread::JoinHandle<()> {
+pub fn spawn_render_thread(stdout: Arc<Mutex<Stdout>>, state: Arc<Mutex<GameState>>, ct: CancellationToken) -> thread::JoinHandle<()> {
     thread::spawn(move || {
         let mut render_buff = RenderBuffer::new();
 
-        loop {
+        while !ct.is_cancelled() {
             render_buff.clear();
 
             let state = state.lock().unwrap();
-            if state.is_game_over() {
-                 break;
-            }
 
             let screen_width = state.screen_size(Rotation::X);
             let screen_height = state.screen_size(Rotation::Y);
@@ -90,7 +87,7 @@ pub fn draw_endgame_screen(stdout: Arc<Mutex<Stdout>>, state: Arc<Mutex<GameStat
         center_screen += 1;
     }
     center_screen += 1;
-    
+
     let exit_text = "Press any key to exit...";
     let x = center_x(exit_text, screen_width);
     render_buff.draw(x, center_screen, exit_text);

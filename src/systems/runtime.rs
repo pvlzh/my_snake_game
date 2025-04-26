@@ -1,7 +1,7 @@
 use std::sync::{mpsc, Arc, Mutex};
 
 use super::*;
-use crate::models::{GameSpeed, GameState, Screen};
+use crate::models::{CancellationTokenSource, GameSpeed, GameState, Screen};
 
 /// Запустить игровой процесс.
 pub fn run() -> Result<(), Box<dyn std::error::Error>> {
@@ -15,20 +15,26 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
     let game_state = GameState::new(screen_size, start_game_speed).into_arc_mutex();
 
     let (key_event_sender, key_event_receiver) = mpsc::channel();
+    let ct_source = CancellationTokenSource::new();
 
+    let ct = ct_source.token();
     let input_thread = input::spawn_input_thread(
         key_event_sender,
-        game_state.clone());
+        ct);
+
+    let ct = ct_source.token();
+    let render_thread = render::spawn_render_thread(
+        stdout.clone(),
+        game_state.clone(),
+        ct);
 
     let game_thread = game::spawn_game_thread(
         key_event_receiver,
         game_state.clone());
 
-    let render_thread = render::spawn_render_thread(
-        stdout.clone(),
-        game_state.clone());
-
     game_thread.join().unwrap();
+    ct_source.cancel();
+
     render_thread.join().unwrap();
     input_thread.join().unwrap();
 

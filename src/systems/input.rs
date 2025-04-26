@@ -1,24 +1,18 @@
 use crossterm::event::{Event, KeyCode};
 use core::time;
-use std::{sync::{mpsc::Sender, Arc, Mutex}, thread, time::{Duration, Instant}};
+use std::{sync::mpsc::Sender, thread, time::{Duration, Instant}};
 
-use crate::models::GameState;
+use crate::models::CancellationToken;
 
 /// Создать поток ввода.
-pub fn spawn_input_thread(key_event_sender: Sender<KeyCode>, state: Arc<Mutex<GameState>>) -> thread::JoinHandle<()> {
+pub fn spawn_input_thread(key_event_sender: Sender<KeyCode>, ct: CancellationToken) -> thread::JoinHandle<()> {
     thread::spawn(move || {
         let key_repeat_cooldown = Duration::from_millis(100);
         let input_idle_duration = time::Duration::from_millis(500);
 
         let mut input_limiter = InputFrequencyLimiter::new(key_repeat_cooldown);
-        loop {
-            let is_game_over = {
-                let locked_state = state.lock().unwrap();
-                locked_state.is_game_over()
-            };
-            if is_game_over {
-                break;
-            }
+
+        while !ct.is_cancelled() {
             if let Ok(true) = crossterm::event::poll(input_idle_duration) {
                 if let Ok(Event::Key(key_event)) = crossterm::event::read() {
                     if input_limiter.should_process(key_event.code) {
