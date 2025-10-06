@@ -42,7 +42,7 @@ struct InputFrequencyLimiter {
 }
 
 impl InputFrequencyLimiter {
-    /// Создать огрничитель.
+    /// Создать ограничитель.
     fn new(cooldown: Duration) -> Self {
         InputFrequencyLimiter {
             last_processed: Instant::now(),

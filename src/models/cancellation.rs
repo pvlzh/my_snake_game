@@ -12,7 +12,7 @@ impl CancellationTokenSource {
         }
     }
 
-    /// Полчить токен.
+    /// Получить токен.
     pub fn token(&self) -> CancellationToken {
         CancellationToken {
             is_cancelled: Arc::clone(&self.is_cancelled)
